@@ -3,9 +3,13 @@
 # pip install https://github.com/pyinstaller/pyinstaller/archive/develop.zip
 # C:\Users\1\PycharmProjects\SmartPlot\venv\Scripts\python.exe C:\Anaconda3\Scripts\pyinstaller.exe SmartPlot.spec
 
+import pandas as pd
+import difflib
+import re
+from glob import glob as gb
+from lxml import etree
+import sys
 from kivy.config import Config
-
-Config.set('graphics', 'resizable', False)
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.button import Button
@@ -24,11 +28,9 @@ from kivy.clock import Clock
 import datetime as dt
 from kivy.metrics import dp
 
-# from kivy.uix.effectwidget import FXAAEffect
-# from omxplayer.player import OMXPlayer
-# from kivy.uix.widget import Widget
-# from kivy.properties import ObjectProperty
-# from kivy.uix.progressbar import ProgressBar
+
+sys.setrecursionlimit(10 ** 9)
+Config.set('graphics', 'resizable', False)
 
 
 main_widget_kv = '''
@@ -36,7 +38,7 @@ TabbedPanel:
     id: thePanel
     tab_height: 20
     do_default_tab: False
-    background_color: (0,0,0,1)
+    # background_color: (0,0,0,1)
     canvas:
         Color:
             rgb: (.1,.1,.1,1)
@@ -48,220 +50,258 @@ TabbedPanel:
         ScreenManager:
             id: scr_mngr
             Screen:
-                name: 'Menu'
+                name: 'SP'
                 BoxLayout:
                     id: main
                     orientation: 'vertical'
+                    canvas.before:
+                        Rectangle:
+                            size: self.size
+                            source: 'Emina/Enable/Default'
                     BoxLayout:
-                        # ТУТ ДОЛЖЕН БЫТЬ ПРОЗРАЧНЫЙ ФОН
-                        # Тут должен быть логотип
                         orientation: 'vertical'
-                        size_hint_y: 0.4
+                        size_hint: None, None
+                        size: (800, 120)
+                        canvas.before:
+                            Rectangle:
+                                pos: (15, 489)
+                                size: (324, 81)
+                                source: 'Emina/Enable/Default_1'
                         BoxLayout:
                             Label:
-                                text: "SMARTPLOT"
+                                text: "   SMARTPLOT"
                                 size_hint_x: 11.8
+                                pos_hint: {"x":1, "y":-0.3}
                                 text_size: self.size
                                 halign: 'left'
                                 valign: 'bottom'
-                                font_size: 54
+                                font_size: 48
+                                color: 0.3,0.3,0.3,1
                             BoxLayout:
                                 size_hint: None, None
-                                size: dp(60), dp(60)
-                                pos_hint:{'top': 1, 'right':1}
+                                size: dp(85), dp(85)
+                                pos_hint:{'top': 1.06, 'right': 1}
                                 RoundedButton:
-                                    background_color: 0,0,0,0
+                                    background_normal: 'Emina/Enable/Help'
+                                    background_down: 'Emina/Activated/Help'
                                     halign: 'right'
                                     text: "?"
                                     font_size: 50
+                                    pos: (1,0.5)
                                     on_release:
                                         scr_mngr.transition.direction = 'left'
                                         scr_mngr.current = 'Info'
-                                    canvas.before:
-                                        Color:
-                                            rgba: (.3,.0,.9,1) if self.state=='normal' else (1,1,1,1)
-                                        RoundedRectangle:
-                                            pos: self.pos
-                                            size: 60,60
-                                            radius: [50,]
                         Label:
-                            text: "Активы по группам"
-                            #size_hint_x: 20
+                            text: "Активы по группам      "
                             text_size: self.size
                             halign: 'right'
+                            color: 0.3,0.3,0.3,1
                             font_size: 32
-                    BoxLayout:
-                        size_hint_y: 0.03
-                        canvas:
-                            Color:
-                                rgba: 1, 1, 1, 0.1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                    BoxLayout:
-                        on_dropfile:
-                        Label:
-                            text: "Drag'n Drop"
-                    BoxLayout:
-                        size_hint_y: 0.03
-                        canvas:
-                            Color:
-                                rgba: 1, 1, 1, 0.1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
-                    BoxLayout:
-                        size_hint_y: 0.125
-                        BoxLayout:
-                            size_hint_x: 0.03
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
+                            canvas.before:
                                 Rectangle:
-                                    pos: self.pos
-                                    size: self.size
+                                    pos: (427, 448)
+                                    size: (367, 56)
+                                    source: 'Emina/Enable/Default_2'
+                    BoxLayout:
+                        # size_hint_y: 1.45
+                        on_dropfile:
+                        orientation: 'vertical'
+                        canvas.before:
+                            Rectangle:
+                                pos: (290, 215)
+                                size: (217, 223)
+                                source: 'Emina/Enable/Default_3'
+                        BoxLayout:
+                        Label:
+                            size_hint_y: 0.2
+                            text: "Drag'n Drop"
+                            color: 0.3,0.3,0.3,1
+                        Image:
+                            id: doc_img
+                            source: 'Emina/Enable/DnD'
+                        BoxLayout:
+                            size_hint_y: 0.8
+                    BoxLayout:
+                        #size_hint_y: 0.5
+                        size_hint: None, None
+                        size: (800, 93)
+                        padding: [40,40,40,0]
+                        canvas.before:
+                            Rectangle:
+                                pos: (0, 115)
+                                size: (800, 94)
+                                source: 'Emina/Enable/Default_4'
                         BoxLayout:
                             orientation: 'vertical'
                             BoxLayout:
+                                size_hint: 0.9, 1.4
                                 Label:
-                                    text: '  Двойная с накоплением'
+                                    text: '     X2 c накоплением'
+                                    pos_hint: {"x":1, "y":0.3}
                                     text_size: self.size
+                                    size_hint_x: 0.8
+                                    font_size: 14
+                                    color: 0.3,0.3,0.3,1
                                     valign: 'center'
-                                CheckBox:
+                                ToggleButton:
                                     id: x2n
-                                    size_hint_x: 0.1
+                                    size_hint_x: 0.23
+                                    size_hint_y: 1.5
                                     group: 'b'
-                                    active: True
-                                    #active: False if x1s.active or x1n.active else True
-                                    active: True if x1n.active == False and x1s.active == False else False
+                                    state: 'down'
+                                    background_normal: 'Emina/Enable/Option'
+                                    background_down: 'Emina/Activated/Option'
+                                    #state: 'normal' if x1s.active or x1n.active else 'down'
                             BoxLayout:
+                                padding: [0,0,24,0]
                                 Label:
                                     text: ' нужен excel-файл?'
-                                CheckBox:
+                                    valign: 'top'
+                                    halign: 'right'
+                                    #size_hint_x: 0.7
+                                    color: 0.3,0.3,0.3,1
+                                ToggleButton:
                                     id: xl
-                                    size_hint_x: 0.1
-                                    disabled: False if x2n.active else True
-                        BoxLayout:
-                            size_hint_x: 0.03
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
+                                    size_hint: 0.28, 1.4
+                                    background_disabled_normal: 'Emina/Disable/Tumlr'
+                                    background_disabled_down: 'Emina/Disable/Tumlr'
+                                    background_normal: 'Emina/Enable/Tumlr'
+                                    background_down: 'Emina/Activated/Tumlr'
+                                    disabled: False if x2n.state == 'down' else True
                         BoxLayout:
                             orientation: 'vertical'
                             BoxLayout:
                                 Label:
-                                    text: '  Одинарная с накоплением'
+                                    text: '             X1 с накоплением'
+                                    pos_hint: {"x":1, "y":0.3}
                                     text_size: self.size
+                                    size_hint_x: 0.8
+                                    font_size: 14
+                                    color: 0.3,0.3,0.3,1
                                     valign: 'center'
-                                CheckBox:
+                                ToggleButton:
                                     id: x1n
-                                    size_hint_x: 0.1
+                                    size_hint_x: 0.205
+                                    size_hint_y: 1.7
                                     group: 'b'
-                                    #active: False if x1s.active or x2n.active else True
+                                    background_normal: 'Emina/Enable/Option'
+                                    background_down: 'Emina/Activated/Option'
                             BoxLayout:
                                 Label:
-                                    text: 'значения по бокам?'
-                                CheckBox:
+                                    text: '     значения по бокам?'
+                                    color: 0.3,0.3,0.3,1
+                                ToggleButton:
                                     id: xo
-                                    size_hint_x: 0.1
-                                    disabled: False if x1n.active else True
-                        BoxLayout:
-                            size_hint_x: 0.03
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                        BoxLayout:
-                            Label:
-                                text: '  Одинарная структурированная'
-                                text_size: self.size
-                                valign: 'center'
-                            CheckBox:
-                                id: x1s
-                                size_hint_x: 0.1
-                                group: 'b'
-                                #active: False if x2n.active or x1n.active else True
-                        BoxLayout:
-                            size_hint_x: 0.03
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                    BoxLayout:
-                        size_hint_y: 0.3
-                        Button:
-                            #disabled: False if inn_check.active else True
-                            text: "Сохранить график и xlsx" if xl.active else "Сохранить график"
-                            on_release: app.Action()
-                        BoxLayout:
-                            size_hint_x: 0.03
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
+                                    size_hint: 0.25, 1.17
+                                    background_disabled_normal: 'Emina/Disable/Tumlr'
+                                    background_disabled_down: 'Emina/Disable/Tumlr'
+                                    background_normal: 'Emina/Enable/Tumlr'
+                                    background_down: 'Emina/Activated/Tumlr'
+                                    disabled: False if x1n.state == 'down' else True
                         BoxLayout:
                             orientation: 'vertical'
-                            size_hint_x: 0.4
                             BoxLayout:
-                                size_hint_y: 0.125
-                                canvas:
-                                    Color:
-                                        rgba: 1, 1, 1, 0.1
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
-                            BoxLayout:
-                                BoxLayout:
-                                    orientation: 'vertical'
-                                    Label:
-                                        text: 'Измерение'
-                                    DropBut:
-                                        id: izm
-                                        text: 'в рублях'
-                                BoxLayout:
-                                    orientation: 'vertical'
-                                    size_hint_x: 0.4
-                                    Label:
-                                        text: 'Делим?'
-                                    CheckBox:
-                                        id: div
-                        BoxLayout:
-                            size_hint_x: 0.03
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                        BoxLayout:
-                            orientation: 'vertical'
-                            size_hint_x: 0.2
-                            BoxLayout
-                                size_hint_y: 0.125
-                                canvas:
-                                    Color:
-                                        rgba: 1, 1, 1, 0.1
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
-                            BoxLayout:
-                                orientation: 'vertical'
+                                size_hint_x: 1.1
                                 Label:
-                                    text: 'Нужны подписи?'
+                                    text: '               X1 структурированная'
+                                    pos_hint: {"x":1, "y":0.3}
                                     text_size: self.size
+                                    size_hint_x: 0.9
+                                    font_size: 14
+                                    color: 0.3,0.3,0.3,1
                                     valign: 'center'
-                                CheckBox:
-                                    id: xp
-                                    active: True
+                                ToggleButton:
+                                    id: x1s
+                                    size_hint_x: 0.2
+                                    size_hint_y: 1.7
+                                    group: 'b'
+                                    background_normal: 'Emina/Enable/Option'
+                                    background_down: 'Emina/Activated/Option'
+                            BoxLayout:
+                    BoxLayout:
+                        size_hint: None, None
+                        size: (0, 30)
+                    BoxLayout:
+                        size_hint: None, None
+                        size: (800, 100)
+                        BoxLayout:
+                            orientation: 'vertical'
+                            size_hint: None, None
+                            size: 395, 100
+                            BoxLayout:
+                                BoxLayout:
+                                    size_hint_x: 0.04
+                                Button:
+                                    #disabled: False if inn_check.active else True
+                                    text: "Сохранить график и xlsx" if xl.state == 'down' else "Сохранить график"
+                                    background_normal: 'Emina/Enable/Button_b'
+                                    background_down: 'Emina/Activated/Button_b'
+                                    on_release: app.Action()
+                            BoxLayout:
+                                size_hint_y: 0.01
+                        BoxLayout:
+                            orientation: 'vertical'
+                            size_hint_x: 0.43
+                            canvas:
+                                Rectangle:
+                                    pos: (397, 6)
+                                    size: (399, 100) # (399, 93)
+                                    source: 'Emina/Enable/Default_5'
+                            BoxLayout:
+                                orientation: 'horizontal'
+                                BoxLayout:
+                                    orientation: 'vertical'
+                                    size_hint: 2, 1
+                                    BoxLayout:
+                                        Label:
+                                            text: '        Измерение'
+                                            pos_hint: {"x":0, "y":0.03}
+                                            text_size: self.size
+                                            color: 0.3,0.3,0.3,1
+                                            valign: 'center'
+                                        DropBut:
+                                            id: izm
+                                            pos_hint: {"x":1, "y": -0.1}
+                                            size_hint: None, None
+                                            size: 150, 56
+                                            text: 'в рублях'
+                                            background_normal: 'Emina/Enable/Button_s'
+                                            background_down: 'Emina/Activated/Button_s'
+                                    BoxLayout:
+                                        size_hint: 1.2, 0.9
+                                        # padding: [0,0,0,20]
+                                        Label:
+                                            size_hint: 0.8, 0.9
+                                            text: '                Делим?'
+                                            pos_hint: {"x": 0, "y":0.24}
+                                            text_size: self.size
+                                            color: 0.3,0.3,0.3,1
+                                            valign: 'center'
+                                        ToggleButton:
+                                            id: div
+                                            size_hint: None, None
+                                            size: 49, 31.6
+                                            pos_hint: {"x": -0.2, "y":0.35}
+                                            background_normal: 'Emina/Enable/Tumlr'
+                                            background_down: 'Emina/Activated/Tumlr'
+                                        BoxLayout:
+                                BoxLayout:
+                                    orientation: 'vertical'
+                                    Label:
+                                        text: '         Подписи?'
+                                        size_hint: 1, 1.9
+                                        text_size: self.size
+                                        color: 0.3,0.3,0.3,1
+                                        valign: 'center'
+                                    ToggleButton:
+                                        id: xp
+                                        state: 'down'
+                                        size_hint: None, None
+                                        size: 49, 31.6
+                                        pos_hint: {"x":0.34, "y":1}
+                                        background_normal: 'Emina/Enable/Tumlr'
+                                        background_down: 'Emina/Activated/Tumlr'
+                                    BoxLayout:
             Screen:
                 name: 'Info'
                 ScrollView:
@@ -294,7 +334,7 @@ TabbedPanel:
                                     text: 'Двойная с накоплением'
                                     size_hint_x: 0.4
                                 Image:
-                                    source: "Plot1.png"
+                                    source: "Emina/Plot1"
                                     mipmap: True
                             BoxLayout:
                                 orientation: 'horizontal'
@@ -302,7 +342,7 @@ TabbedPanel:
                                     text: 'Одинарная с накоплением'
                                     size_hint_x: 0.4
                                 Image:
-                                    source: "Plot2.png"
+                                    source: "Emina/Plot2"
                                     mipmap: True
                             BoxLayout:
                                 orientation: 'horizontal'
@@ -310,7 +350,7 @@ TabbedPanel:
                                     text: 'Одинарная структурированная'
                                     size_hint_x: 0.4
                                 Image:
-                                    source: "Plot3.png"
+                                    source: "Emina/Plot3"
                                     mipmap: True
                         BoxLayout:###################################
                             size_hint_y: 0.125
@@ -331,10 +371,10 @@ TabbedPanel:
                                     text: 'сводная таблица со следующими настройками:'
                                     size_hint_y: 0.1
                                 Image:
-                                    source: "Пример.png"
+                                    source: "Emina/example"
                                     size_hint_x: 1
                             Image:
-                                source: "Справка.png"
+                                source: "Emina/setts"
                                 size_hint_x: 0.6
                         BoxLayout:###################################
                             size_hint_y: 0.125
@@ -431,10 +471,10 @@ TabbedPanel:
                                     radius: [50,]
                             on_release:
                                 scr_mngr.transition.direction = 'right'
-                                scr_mngr.current = 'Menu'
+                                scr_mngr.current = 'SP'
     TabbedPanelItem:
         text: 'Выпискатор'
-        id: tab3
+        id: tab2
         #disabled: True
         BoxLayout:
             orientation: 'vertical'
@@ -670,7 +710,7 @@ TabbedPanel:
                     size: (800, 574)
                     id: video
                     vid: '0'
-                    source: './Emina/' + self.vid + '.mkv'
+                    source: './Emina/' + self.vid
                     state: 'play'
             BoxLayout:
                 size_hint: None, None
@@ -837,107 +877,141 @@ TabbedPanel:
                 BoxLayout:
                     id: main
                     orientation: 'vertical'
+                    canvas.before:
+                        Rectangle:
+                            size: self.size
+                            source: 'Emina/Enable/Default'
                     BoxLayout:
                         orientation: 'vertical'
                         size_hint_y: 0.4
+                        canvas.before:
+                            Rectangle:
+                                pos: (15, 489)
+                                size: (324, 81)
+                                source: 'Emina/Enable/Default_1'
                         BoxLayout:
                             Label:
-                                text: "РЕДАКТОР"
+                                text: "   РЕДАКТОР"
                                 size_hint_x: 11.8
+                                pos_hint: {"x":1, "y":-0.2}
                                 text_size: self.size
                                 halign: 'left'
                                 valign: 'bottom'
-                                font_size: 54
+                                font_size: 48
+                                color: 0.3,0.3,0.3,1
                             BoxLayout:
                                 size_hint: None, None
-                                size: dp(60), dp(60)
-                                pos_hint:{'top': 1, 'right':1}
+                                size: dp(85), dp(85)
+                                pos_hint:{'top': 1.06, 'right': 1}
                                 RoundedButton:
-                                    background_color: 0,0,0,0
+                                    background_normal: 'Emina/Enable/Help'
+                                    background_down: 'Emina/Activated/Help'
                                     halign: 'right'
                                     text: "?"
                                     font_size: 50
+                                    pos: (1,0.5)
                                     on_release:
                                         scr_mngr2.transition.direction = 'left'
                                         scr_mngr2.current = 'Info2'
-                                    canvas.before:
-                                        Color:
-                                            rgba: (.3,.0,.9,1) if self.state=='normal' else (1,1,1,1)
-                                        RoundedRectangle:
-                                            pos: self.pos
-                                            size: 60,60
-                                            radius: [50,]
                         Label:
-                            text: "Типограф для Word отчётов"
-                            #size_hint_x: 20
+                            text: "Типограф для отчётов  "
                             text_size: self.size
                             halign: 'right'
+                            color: 0.3,0.3,0.3,1
                             font_size: 32
-                    BoxLayout:
-                        size_hint_y: 0.03
-                        canvas:
-                            Color:
-                                rgba: 1, 1, 1, 0.1
-                            Rectangle:
-                                pos: self.pos
-                                size: self.size
+                            canvas.before:
+                                Rectangle:
+                                    pos: (427, 448)
+                                    size: (367, 56)
+                                    source: 'Emina/Enable/Default_2'
+                        BoxLayout:
+                            size_hint_y: 0.3
                     BoxLayout:
                         on_dropfile:
-                        Label:
-                            text: "Drag'n Drop"
-                    BoxLayout:
-                        size_hint_y: 0.03
-                        canvas:
-                            Color:
-                                rgba: 1, 1, 1, 0.1
+                        orientation: 'vertical'
+                        canvas.before:
                             Rectangle:
-                                pos: self.pos
-                                size: self.size
+                                pos: (290, 215)
+                                size: (217, 223)
+                                source: 'Emina/Enable/Default_3'
+                        BoxLayout:
+                        Label:
+                            size_hint_y: 0.2
+                            text: "Drag'n Drop"
+                            color: 0.3,0.3,0.3,1
+                        Image:
+                            id: doc_img
+                            source: 'Emina/Enable/DnD'
+                        BoxLayout:
+                            size_hint_y: 2.7
                     BoxLayout:
-                        size_hint_y: 0.125
+                        size_hint: None, None
+                        size: (800, 100)
                         BoxLayout:
-                        BoxLayout:
-                            size_hint_x: 0.03
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                    BoxLayout:
-                        size_hint_y: 0.3
-                        Button:
-                            #disabled: False if inn_check.active else True
-                            text: "Исправить отчёт"
-                            on_release: app.Typograph()
-                        BoxLayout:
-                            size_hint_x: 0.03
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
+                            orientation: 'vertical'
+                            size_hint: None, None
+                            size: 395, 100
+                            BoxLayout:
+                                BoxLayout:
+                                    size_hint_x: 0.04
+                                Button:
+                                    #disabled: False if inn_check.active else True
+                                    text: "Исправить отчёт"
+                                    background_normal: 'Emina/Enable/Button_b'
+                                    background_down: 'Emina/Activated/Button_b'
+                                    on_release: app.Typograph()
+                            BoxLayout:
+                                size_hint_y: 0.01
                         BoxLayout:
                             orientation: 'vertical'
                             size_hint_x: 0.2
-                            BoxLayout
-                                size_hint_y: 0.125
-                                canvas:
-                                    Color:
-                                        rgba: 1, 1, 1, 0.1
-                                    Rectangle:
-                                        pos: self.pos
-                                        size: self.size
+                            canvas.before:
+                                Rectangle:
+                                    pos: (390, 6)
+                                    size: (200, 98)
+                                    source: 'Emina/Enable/Default_6'
                             BoxLayout:
                                 orientation: 'vertical'
                                 Label:
-                                    text: 'Руб. на ₽?'
+                                    text: '        Исправлять даты?'
                                     text_size: self.size
-                                    halign: 'center'
-                                CheckBox:
+                                    color: 0.3,0.3,0.3,1
+                                    valign: 'center'
+                                ToggleButton:
+                                    id: ndate
+                                    size_hint: None, None
+                                    size: 49, 31.6
+                                    state: 'down'
+                                    pos_hint: {"x":0.34, "y":1}
+                                    background_normal: 'Emina/Enable/Tumlr'
+                                    background_down: 'Emina/Activated/Tumlr'
+                            BoxLayout:
+                                size_hint_y: 0.3
+                        BoxLayout:
+                            orientation: 'vertical'
+                            size_hint_x: 0.2
+                            canvas.before:
+                                Rectangle:
+                                    pos: (590, 6)
+                                    size: (200, 98)
+                                    source: 'Emina/Enable/Default_6'
+                            BoxLayout:
+                                orientation: 'vertical'
+                                Label:
+                                    text: '               Руб. на ₽?'
+                                    text_size: self.size
+                                    color: 0.3,0.3,0.3,1
+                                    valign: 'center'
+                                ToggleButton:
                                     id: rubl
-                                    active: False
+                                    state: 'normal'
+                                    size_hint: None, None
+                                    size: 49, 31.6
+                                    pos_hint: {"x":0.34, "y":1}
+                                    background_normal: 'Emina/Enable/Tumlr'
+                                    background_down: 'Emina/Activated/Tumlr'
+                            BoxLayout:
+                                size_hint_y: 0.3
             Screen:
                 name: 'Info2'
                 BoxLayout:
@@ -1016,153 +1090,145 @@ TabbedPanel:
                                     radius: [50,]
                             on_release:
                                 scr_mngr2.transition.direction = 'right'
-                                scr_mngr2.current = 'Menu'            
+                                scr_mngr2.current = 'Menu'
+    TabbedPanelItem:
+        id: tab5
+        text:'Недвигер'
+        ScreenManager:
+            id: scr_mngr3
             Screen:
-                name: 'Info'
-                ScrollView:
-                    do_scroll_x: False
+                name: 'Menu'
+                BoxLayout:
+                    id: main
+                    orientation: 'vertical'
+                    canvas.before:
+                        Rectangle:
+                            size: self.size
+                            source: 'Emina/Enable/Default'
                     BoxLayout:
                         orientation: 'vertical'
-                        size_hint_y: None
-                        height: dp(1800)
-                        Label:
-                            text: 'Справка'
-                            font_size: 48
-                        BoxLayout:###################################
-                            size_hint_y: 0.125
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                        Label:
-                            text: 'Программа позволяет строить три диаграммы:'
-                            font_size: 20
-                            size_hint_y: 0.3
+                        size_hint_y: 0.4
+                        canvas.before:
+                            Rectangle:
+                                pos: (15, 489)
+                                size: (324, 81)
+                                source: 'Emina/Enable/Default_1'
                         BoxLayout:
-                            size_hint_y: 13
+                            Label:
+                                text: "   НЕДВИГЕР"
+                                size_hint_x: 11.8
+                                pos_hint: {"x":1, "y":-0.2}
+                                text_size: self.size
+                                halign: 'left'
+                                valign: 'bottom'
+                                font_size: 48
+                                color: 0.3,0.3,0.3,1
+                            BoxLayout:
+                                size_hint: None, None
+                                size: dp(85), dp(85)
+                                pos_hint:{'top': 1.06, 'right': 1}
+                                RoundedButton:
+                                    background_normal: 'Emina/Enable/Help'
+                                    background_down: 'Emina/Activated/Help'
+                                    halign: 'right'
+                                    text: "?"
+                                    font_size: 50
+                                    pos: (1,0.5)
+                                    on_release:
+                                        scr_mngr3.transition.direction = 'left'
+                                        scr_mngr3.current = 'Info3'
+                        Label:
+                            text: "БД по переходам прав "
+                            text_size: self.size
+                            halign: 'right'
+                            color: 0.3,0.3,0.3,1
+                            font_size: 32
+                            canvas.before:
+                                Rectangle:
+                                    pos: (427, 448)
+                                    size: (367, 56)
+                                    source: 'Emina/Enable/Default_2'
+                        BoxLayout:
+                            size_hint_y: 0.3
+                    BoxLayout:
+                        on_dropfile:
+                        orientation: 'vertical'
+                        canvas.before:
+                            Rectangle:
+                                pos: (290, 215)
+                                size: (217, 223)
+                                source: 'Emina/Enable/Default_3'
+                        BoxLayout:
+                        Label:
+                            size_hint_y: 0.2
+                            text: "Drag'n Drop"
+                            color: 0.3,0.3,0.3,1
+                        Image:
+                            id: doc_img
+                            source: 'Emina/Enable/DnD'
+                        BoxLayout:
+                            size_hint_y: 2.7
+                    BoxLayout:
+                        size_hint: None, None
+                        size: (800, 100)
+                        BoxLayout:
                             orientation: 'vertical'
+                            size_hint: None, None
+                            size: 395, 100
                             BoxLayout:
-                                orientation: 'horizontal'
-                                Label:
-                                    text: 'Двойная с накоплением'
-                                    size_hint_x: 0.4
-                                Image:
-                                    source: "Plot1.png"
-                                    mipmap: True
+                                BoxLayout:
+                                    size_hint_x: 0.04
+                                Button:
+                                    #disabled: False if inn_check.active else True
+                                    text: "Сохранить базу данных"
+                                    background_normal: 'Emina/Enable/Button_b'
+                                    background_down: 'Emina/Activated/Button_b'
+                                    on_release: app.EGRN()
                             BoxLayout:
-                                orientation: 'horizontal'
-                                Label:
-                                    text: 'Одинарная с накоплением'
-                                    size_hint_x: 0.4
-                                Image:
-                                    source: "Plot2.png"
-                                    mipmap: True
-                            BoxLayout:
-                                orientation: 'horizontal'
-                                Label:
-                                    text: 'Одинарная структурированная'
-                                    size_hint_x: 0.4
-                                Image:
-                                    source: "Plot3.png"
-                                    mipmap: True
-                        BoxLayout:###################################
-                            size_hint_y: 0.125
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                        BoxLayout:
-                            size_hint_y: 5
-                            BoxLayout:
-                                orientation: 'vertical'
-                                Label:
-                                    text: 'Перетащите excel, где на первом листе будет'
-                                    size_hint_y: 0.1
-                                Label:
-                                    text: 'сводная таблица со следующими настройками:'
-                                    size_hint_y: 0.1
-                                Image:
-                                    source: "Пример.png"
-                                    size_hint_x: 1
-                            Image:
-                                source: "Справка.png"
-                                size_hint_x: 0.6
-                        BoxLayout:###################################
-                            size_hint_y: 0.125
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                        Label:
-                            text: "Желательно, чтобы в книге excel было до трех листов"
-                            size_hint_y: 0.3
-                        Label:
-                            text: "(сводную таблицу можно сразу делать в новой книге)"
-                            size_hint_y: 0.3
-                        BoxLayout:###################################
-                            size_hint_y: 0.125
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                        Label:
-                            text: "Если требуется все же в ручную построить <Двойная с накоплением>,"
-                            size_hint_y: 0.3
-                        Label:
-                            text: "то для этого можно поставить галочку в графе <Нужен excel-файл?>"
-                            size_hint_y: 0.3
-                        BoxLayout:###################################
-                            size_hint_y: 0.125
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                        Label:
-                            text: "Если требуется чтобы в <Одинарная с накоплением>"
-                            size_hint_y: 0.3
-                        Label:
-                            text: "справедливая стоимость отражалась справа - отметьте <по бокам>"
-                            size_hint_y: 0.3
-                        BoxLayout:###################################
-                            size_hint_y: 0.125
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                        Label:
-                            text: "Также есть возможность указать размерность и при необходимости разделить"
-                            size_hint_y: 0.4
-                        BoxLayout:###################################
-                            size_hint_y: 0.125
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
-                        Label:
-                            text: "Все, что сверх - допиливается руками в MS Paint / PowerPoint"
-                            size_hint_y: 0.4
-                        BoxLayout:###################################
-                            size_hint_y: 0.125
-                            canvas:
-                                Color:
-                                    rgba: 1, 1, 1, 0.1
-                                Rectangle:
-                                    pos: self.pos
-                                    size: self.size
+                                size_hint_y: 0.01
+            Screen:
+                name: 'Info3'
+                BoxLayout:
+                    orientation: 'vertical'
+                    #size_hint_y: None
+                    Label:
+                        text: 'Справка'
+                        font_size: 48
+                    BoxLayout:###################################
+                        size_hint_y: 0.125
+                        canvas:
+                            Color:
+                                rgba: 1, 1, 1, 0.1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                        text: 'Требуется перетащить папку с .xml файлами в окно программы'
+                        font_size: 20
+                        size_hint_y: 0.3
+                    BoxLayout:###################################
+                        size_hint_y: 0.125
+                        canvas:
+                            Color:
+                                rgba: 1, 1, 1, 0.1
+                            Rectangle:
+                                pos: self.pos
+                                size: self.size
+                    Label:
+                    Label:
+                        text: 'Программа пройдется по каждому файлу,'
+                        font_size: 16
+                        size_hint_y: 0.3
+                    Label:
+                        text: 'вытащит все содержащиеся данные и '
+                        font_size: 16
+                        size_hint_y: 0.3
+                    Label:
+                        text: 'сохранит excel-файл на рабочем столе.'
+                        font_size: 16
+                        size_hint_y: 0.3
+                    BoxLayout:
+                        #size_hint_y: dp(960)
                 FloatLayout:
                     halign: 'right'
                     BoxLayout:
@@ -1185,26 +1251,40 @@ TabbedPanel:
                                     size: 60,60
                                     radius: [50,]
                             on_release:
-                                scr_mngr.transition.direction = 'right'
-                                scr_mngr.current = 'Menu'
+                                scr_mngr3.transition.direction = 'right'
+                                scr_mngr3.current = 'Menu'
 
 <Popup>:
     id: err_popup
     title:     "Ошибка"
     size_hint_y: 0.9
     size_hint_x: 0.9
+    separator_color: 0,0,0,0
+    title_color: 0.3,0.3,0.3,1
+    title_size: 18
+    background: 'Emina/Enable/Default'
     BoxLayout:
         orientation: "vertical"
         Label:
-            text: "Перетащите Excel со сводной таблицей (настройки см. ниже) в окно программы!"
+            text: app.popup_errtxt()[0]
             size_hint_y: 0.2
+            color: 0.3,0.3,0.3,1
+            canvas.before:
+                Rectangle:
+                    pos: (15, 489)
+                    size: (324, 81)
+                    source: 'Emina/Enable/Default_1'
         Image:
             id: image
-            source: "Справка.png"
+            source: "Emina/setts"
+            opacity: app.popup_errtxt()[1]
         Button:
-            size_hint:  (1, 0.2)
+            size_hint:  (0.4, 0.2)
             text: "Вернуться"
+            background_normal: 'Emina/Enable/Button_s'
+            background_down: 'Emina/Activated/Button_s'
             on_release: err_popup.dismiss()
+
 <RoundedButton@Button>:
     # Кнопка справки
     # text: '?'
@@ -1213,9 +1293,7 @@ TabbedPanel:
     #     app.root.transition.direction = 'left'
     #     app.root.current = 'Info'
 '''
-import pandas as pd
-import difflib
-import re
+
 
 inn_table = ['Всех Заемщиков', '', '']
 inns = None
@@ -1239,10 +1317,6 @@ class SmartPlot(App):
 
     def __init__(self, **kwargs):
         super(SmartPlot, self).__init__(**kwargs)
-
-    # self.progress_bar = ProgressBar() # instance of ProgressBar created.
-    # self.popup = Popup(title='Place Yout Title Here.....', content=self.progress_bar) # progress bar assigned to popup
-    # self.popup.bind(on_open=self.puopen) # Binds super widget to on_open.
 
     def build(self):
         main_widget = Builder.load_string(main_widget_kv)
@@ -1282,13 +1356,27 @@ class SmartPlot(App):
                 SmartPlot.df2 = pd.read_excel(path, header=None)
         else:
             SmartPlot.file_paths = file_path
+            App.get_running_app().root.ids.doc_img.source = 'Emina/Activated/DnD'
 
+    def popup_errtxt(self):
+        if App.get_running_app().root.current_tab.text == "Редактор":
+            txt = "Перетащите Word-файл с текстом в окно программы!"
+            img_hide = 0
+        elif App.get_running_app().root.current_tab.text == "Недвигер":
+            txt = "Перетащите папку с .xml-файлами в окно программы!"
+            img_hide = 0
+        else:
+            txt = "Перетащите Excel со сводной таблицей (настройки см. ниже) в окно программы!"
+            img_hide = 1
+        return [txt, img_hide]
+
+    # ОСНОВНАЯ ФУНКЦИЯ SMARTPLOT
     def Action(self):
-        if App.get_running_app().root.ids.x1s.active == True:
+        if App.get_running_app().root.ids.x1s.state == 'down':
             n = 3
-        elif App.get_running_app().root.ids.x1n.active == True:
+        elif App.get_running_app().root.ids.x1n.state == 'down':
             n = 2
-        elif App.get_running_app().root.ids.x2n.active == True:
+        elif App.get_running_app().root.ids.x2n.state == 'down':
             n = 1
         else:
             n = 1
@@ -1297,23 +1385,21 @@ class SmartPlot(App):
             izmerenie = 'руб.'
         if App.get_running_app().root.ids.izm.text == 'в тысячах':
             izmerenie = 'тыс. руб.'
-            if App.get_running_app().root.ids.div.active == True:
+            if App.get_running_app().root.ids.div.state == 'down':
                 delim = 1000
         if App.get_running_app().root.ids.izm.text == 'в миллионах':
             izmerenie = 'млн руб.'
-            if App.get_running_app().root.ids.div.active == True:
+            if App.get_running_app().root.ids.div.state == 'down':
                 delim = 1000000
         if App.get_running_app().root.ids.izm.text == 'в миллиардах':
             izmerenie = 'млрд руб.'
-            if App.get_running_app().root.ids.div.active == True:
+            if App.get_running_app().root.ids.div.state == 'down':
                 delim = 1000000000
         try:
             file = r'' + SmartPlot.file_paths.decode("utf-8")
             from pandas import read_excel, ExcelWriter
             from numpy import arange, array, nan_to_num, zeros, squeeze, divide, zeros_like
             df = read_excel(file, header=(1, 2), index_col=0)
-            # Clock.schedule_once(self.progress_bar_start) # Uses clock to call progress_bar_start() (callback) one time only
-            # SmartPlot.progress_bar_start(self,1)
             try:
                 df = df / delim
                 df = df.round()
@@ -1352,7 +1438,7 @@ class SmartPlot(App):
 
             # import os
             from os.path import expanduser as osexp
-            if App.get_running_app().root.ids.xl.active == True:
+            if App.get_running_app().root.ids.xl.state == 'down':
                 # writer = pd.ExcelWriter(os.path.expanduser('~/Desktop/ASVplot.xlsx'))
                 writer = ExcelWriter(osexp('~/Desktop/ASVplot.xlsx'))
                 DF.to_excel(writer, 'Группы')
@@ -1628,7 +1714,7 @@ class SmartPlot(App):
                         horizontalalignment='right', **plot_font_bold)
 
                 # Подписи диаграмм
-                if App.get_running_app().root.ids.xp.active == True:
+                if App.get_running_app().root.ids.xp.state == 'down':
                     ## столбец с суммами нетто
                     NS = squeeze(array(df[NettoSum]))
                     ## столбец с суммами сс
@@ -1891,7 +1977,7 @@ class SmartPlot(App):
                 barh(y, h3, color=('#02003d'), height=1.2, left=list(map(lambda h, hh: h + hh, h1, h2)), alpha=0)
                 barh(y, names, color='white', alpha=0)
                 barh(y, value_netto, color='white', alpha=0, left=names)
-                if App.get_running_app().root.ids.xo.active == True:
+                if App.get_running_app().root.ids.xo.state == 'down':
                     dop_one = dop_one - value_ss
                 else:
                     barh(y, value_ss, color='white', alpha=0, left=list(map(lambda n, vn: n + vn, names, value_netto)))
@@ -1922,7 +2008,7 @@ class SmartPlot(App):
                     lambda d, gs, gn, bs, bn, grs, grn, ys, yn, os: d + gs + gn + bs + bn + grs + grn + ys + yn + os,
                     dop_one, green_ss, green_net, blue_ss, blue_net, gray_ss, gray_net, yellow_ss, yellow_net,
                     orange_ss)), hatch='//')
-                if App.get_running_app().root.ids.xo.active == True:
+                if App.get_running_app().root.ids.xo.state == 'down':
                     barh(y, value_ss, color='white', alpha=0, left=list(map(
                         lambda d, gs, gn, bs, bn, grs, grn, ys, yn, os,
                                on: d + gs + gn + bs + bn + grs + grn + ys + yn + os + on, dop_one, green_ss, green_net,
@@ -1947,7 +2033,7 @@ class SmartPlot(App):
                     plttext(ots, r, Netto_label, verticalalignment='center', horizontalalignment='right', **plot_font)
 
                 ## суммы cc
-                if App.get_running_app().root.ids.xo.active == True:
+                if App.get_running_app().root.ids.xo.state == 'down':
                     ots = max(df.IndeX) + max(df.NettoS) * 2 + maxnetto + max(df.SSS) * 2 / 1.2
                 else:
                     ots = max(df.IndeX) + max(df.NettoS) * 2 + max(df.SSS) * 2 / 1.2
@@ -1963,7 +2049,7 @@ class SmartPlot(App):
                         horizontalalignment='left', **plot_font_bold)
                 plttext(max(df.IndeX) + max(df.NettoS) * 2 / 2, len(y) - 1, 'Балансовая\nстоимость',
                         verticalalignment='center', horizontalalignment='center', **plot_font_bold)
-                if App.get_running_app().root.ids.xo.active == True:
+                if App.get_running_app().root.ids.xo.state == 'down':
                     plttext(max(df.IndeX) + max(df.NettoS) * 2, len(y) - 1, 'Распределение активов по группам',
                             verticalalignment='center', horizontalalignment='left', **plot_font_bold)
                     plttext(max(df.IndeX) + max(df.NettoS) * 2 + maxnetto + max(df.NettoS) * 2 / 2, len(y) - 1,
@@ -1981,7 +2067,7 @@ class SmartPlot(App):
                 plttext(0, -1, 'ИТОГО', verticalalignment='center', horizontalalignment='left', **plot_font_bold)
                 plttext(max(df.IndeX) + max(df.NettoS) * 2 / 1.2, -1, '{:,}'.format(trunc(SumNetto)).replace(',', ' '),
                         verticalalignment='center', horizontalalignment='right', **plot_font_bold)
-                if App.get_running_app().root.ids.xo.active == True:
+                if App.get_running_app().root.ids.xo.state == 'down':
                     plttext(max(df.IndeX) + max(df.NettoS) * 2 + maxnetto + max(df.SSS) * 2 / 1.2, -1,
                             '{:,}'.format(trunc(SumSS)).replace(',', ' '), verticalalignment='center',
                             horizontalalignment='right', **plot_font_bold)
@@ -1991,9 +2077,9 @@ class SmartPlot(App):
                             horizontalalignment='right', **plot_font_bold)
                 # Подписи диаграмм
                 ## столбец с суммами сс
-                if App.get_running_app().root.ids.xp.active == True:
+                if App.get_running_app().root.ids.xp.state == 'down':
                     SSS = squeeze(array(df[SSSum]))
-                    if App.get_running_app().root.ids.xo.active == True:
+                    if App.get_running_app().root.ids.xo.state == 'down':
                         ssots = max(df.IndeX) + max(
                             df.NettoS) * 2  # отступ для подписей СС bar (чтобы не вбивать много раз)
                     else:
@@ -2033,7 +2119,7 @@ class SmartPlot(App):
                              (i - 0.5, i - 0.5), alpha=0.3, color=('#02003d'), linestyle='--', linewidth=1)
 
                 # Легенда
-                if App.get_running_app().root.ids.xo.active == True:
+                if App.get_running_app().root.ids.xo.state == 'down':
                     legend(bbox_to_anchor=(0.308, 0), loc='center left', ncol=3, framealpha=0.0, prop={'size': 12})
                 else:
                     legend(bbox_to_anchor=(1, 0), loc='center right', ncol=3, framealpha=0.0,
@@ -2202,7 +2288,7 @@ class SmartPlot(App):
                         horizontalalignment='right', **plot_font_bold)
                 # Подписи диаграмм
                 ## столбец с суммами сс
-                if App.get_running_app().root.ids.xp.active == True:
+                if App.get_running_app().root.ids.xp.state == 'down':
                     SSS = squeeze(array(df[SSSum]))
                     ssots = max(df.IndeX) + max(df.NettoS) * 2 + max(
                         df.SSS) * 2  # отступ для подписей СС bar (чтобы не вбивать много раз)
@@ -2249,18 +2335,7 @@ class SmartPlot(App):
             print(e)
             Popup().open()
 
-    ############ СЧЕТЧИК ВЫПОЛНЕНИЯ ############
-    # progress_bar = ObjectProperty() # Kivy properties classes are used when you create an EventDispatcher.
-    # def progress_bar_start(self, instance): # Provides initial value of of progress bar and lanches popup
-    #     self.progress_bar.value = 1 # Initial value of progress_bar
-    #     self.popup.open() # starts puopen()
-    # def next(self, dt): # Updates Project Bar
-    #     if self.progress_bar.value >= 100: # Checks to see if progress_bar.value has met 100
-    #         return False # Returning False schedule is canceled and won't repeat
-    #     self.progress_bar.value += 1 # Updates progress_bar's progress
-    # def puopen(self, instance): # Called from bind.
-    #     Clock.schedule_interval(self.next, .0005) # Creates Clock event scheduling next() every 5-1000th of a second.
-
+    # ОСНОВНАЯ ФУНКЦИЯ ВЫПИСКАТОРА
     def Visualize(self):
         def Azbuka(self, x):
             Excel = {'A': 0, 'B': 1, 'C': 2, 'D': 3, 'E': 4, 'F': 5,
@@ -2656,12 +2731,6 @@ class SmartPlot(App):
                     if acc < 100:
                         try:
                             VPR_loop(df3, acc, col1, col2, nachalo)  # желательно на другом ядре
-                        # if __name__ == '__main__':
-                        #     from multiprocessing import Process
-                        #     print(111)
-                        #     p = Process(target=VPR_loop, args=(df3, acc, col1, col2, nachalo))
-                        #     p.start()
-                        #     p.join()
                         except Exception as e:
                             print(e)
                             try:
@@ -2730,12 +2799,16 @@ class SmartPlot(App):
             else:
                 SmartPlot.vid_state += 1
 
-    # ОСНОВНАЯ ФУНКЦИЯ СБИВАТОРА
+    # ОСНОВНАЯ ФУНКЦИЯ ТИПОГРАФА
     def Typograph(self):
-        if App.get_running_app().root.ids.rubl.active == True:
+        if App.get_running_app().root.ids.rubl.state == 'down':
             need_rub = True
         else:
             need_rub = False
+        if App.get_running_app().root.ids.ndate.state == 'down':
+            need_date = True
+        else:
+            need_date = False
         try:
             path = r'' + SmartPlot.file_paths.decode("utf-8")
             import docx
@@ -2826,16 +2899,18 @@ class SmartPlot(App):
                 i.text = i.text.replace('ОАО ', 'ОАО' + chr(160))
                 i.text = i.text.replace('ПАО ', 'ПАО' + chr(160))
                 i.text = i.text.replace('АО ', 'АО' + chr(160))
-                ### ДАТЫ
-                # print('Обработка дат')
-                if re.findall(r'\d\.\d\d\d\d', i.text):
-                    i.text = re.sub(r'\d\d\.\d\d\.\d\d\d\d', data_ch, i.text)
-                    i.text = re.sub(r'\d\d\.\d\.\d\d\d\d', data_ch, i.text)
-                    i.text = re.sub(r' \d\.\d\d\.\d\d\d\d', data_ch, i.text)
-                    i.text = re.sub(r' \d\.\d\.\d\d\d\d', data_ch, i.text)
-                    i.text = i.text.replace('..', '.')
-                    i.text = i.text.replace(' .', '.')
-                    i.text = i.text.replace(chr(160) + '.', '.')
+
+                if need_date:
+                    ### ДАТЫ
+                    # print('Обработка дат')
+                    if re.findall(r'\d\.\d\d\d\d', i.text):
+                        i.text = re.sub(r'\d\d\.\d\d\.\d\d\d\d', data_ch, i.text)
+                        i.text = re.sub(r'\d\d\.\d\.\d\d\d\d', data_ch, i.text)
+                        i.text = re.sub(r' \d\.\d\d\.\d\d\d\d', data_ch, i.text)
+                        i.text = re.sub(r' \d\.\d\.\d\d\d\d', data_ch, i.text)
+                        i.text = i.text.replace('..', '.')
+                        i.text = i.text.replace(' .', '.')
+                        i.text = i.text.replace(chr(160) + '.', '.')
                 if need_rub:
                     i.text = i.text.replace('руб.', '₽')
                 if len(p.text) > 1 and p.text[-1] == '₽':
@@ -2869,7 +2944,86 @@ class SmartPlot(App):
                 doc.save(osexp(r'~/Рабочий стол/' + 'Report' + '.docx'))
         except Exception as e:
             print(e)
+            Popup().open()
         print('Done')
+
+    # ОСНОВНАЯ ФУНКЦИЯ НЕДВИГЕРА
+    def EGRN(self):
+        def parse(path):
+            try:
+                tree = etree.parse(path)
+                lstKey = []
+                lstValue = []
+                for p in tree.iter():
+                    lstKey.append(tree.getpath(p).replace("/", ".")[1:])
+                    lstValue.append(p.text)
+                df = pd.DataFrame({'key': lstKey, 'value': lstValue})
+                df.loc[:, 'Кадастровый№'] = df.loc[df['key'].str.contains('CadastralNumber'), 'value'].squeeze()
+                df.loc[:, 'Тип'] = df.loc[df['key'].str.contains('ObjectDesc.Name'), 'value'].squeeze()
+                df.loc[:, 'Подтип'] = df.loc[df['key'].str.contains('ObjectDesc.ObjectTypeText'), 'value'].squeeze()
+                df.loc[:, 'Категория'] = df.loc[
+                    df['key'].str.contains('ObjectDesc.GroundCategoryText'), 'value'].squeeze()
+                df.loc[:, 'Площадь'] = df.loc[df['key'].str.contains('ObjectDesc.Area.AreaText'), 'value'].squeeze()
+                df.loc[:, 'Адрес'] = df.loc[df['key'].str.contains('ObjectDesc.Address.Content'), 'value'].squeeze()
+                # Заполняем собственника
+                df.loc[df['key'].str.contains('Owner.*Content', regex=True), 'Собственник'] = df.loc[
+                    df['key'].str.contains('Owner.*Content', regex=True), 'value']
+                df.loc[:, 'Собственник'].fillna(method='ffill', inplace=True)
+                # заполняем право
+                df.loc[df['key'].str.contains('Registration.*Name', regex=True) & ~df['key'].str.contains('DocFound',
+                                                                                                          regex=True), 'Право'] = \
+                df.loc[df['key'].str.contains('Registration.*Name', regex=True) & ~df['key'].str.contains('DocFound',
+                                                                                                          regex=True), 'value']
+                # заполняем дату регистрации
+                df.loc[df['key'].str.contains('Registration.*RegDate', regex=True), 'Дата регистрации права'] = df.loc[
+                    df['key'].str.contains('Registration.*RegDate', regex=True), 'value']
+                # заполняем № регистрации
+                df.loc[df['key'].str.contains('Registration.*RegNumber', regex=True), '№ регистрации права'] = df.loc[
+                    df['key'].str.contains('Registration.*RegNumber', regex=True), 'value']
+                # заполняем Правоустанавливающий документ
+                df.loc[df['key'].str.contains('Registration.*Name', regex=True) & df['key'].str.contains('DocFound',
+                                                                                                         regex=True), 'Правоустанавливающий документ'] = \
+                df.loc[df['key'].str.contains('Registration.*Name', regex=True) & df['key'].str.contains('DocFound',
+                                                                                                         regex=True), 'value']
+                # заполняем № правоустанавливающего документа
+                df.loc[df['key'].str.contains('Registration.*Number', regex=True) & df['key'].str.contains('DocFound',
+                                                                                                           regex=True), '№ правоустанавливающего документа'] = \
+                df.loc[df['key'].str.contains('Registration.*Number', regex=True) & df['key'].str.contains('DocFound',
+                                                                                                           regex=True), 'value']
+                # заполняем Дата правоустанавливающего документа
+                df.loc[df['key'].str.contains('Registration.*Date', regex=True) & df['key'].str.contains('DocFound',
+                                                                                                         regex=True), 'Дата правоустанавливающего документа'] = \
+                df.loc[df['key'].str.contains('Registration.*Date', regex=True) & df['key'].str.contains('DocFound',
+                                                                                                         regex=True), 'value']
+                # заполняем NULL
+                owners = df.loc[:, 'Собственник'].dropna().unique().tolist()
+                for owner in owners:
+                    for column in df.columns.tolist()[9:]:
+                        df.loc[df['Собственник'] == owner, column] = df.loc[
+                            (df['Собственник'] == owner) & (df[column].isna() == False), column].squeeze()
+                # Фильтруем, убираем лишние столбцы
+                df = df.loc[df['key'].str.contains('Owner.*Content', regex=True), df.columns.tolist()[2:]]
+                return df
+            except:
+                print('TROUBLE!!!!!!!!!!!!!', path)
+        def parsing(fpath):
+            files = gb(fpath)
+            res = []
+            for i, file in enumerate(files):
+                print(file)
+                if i == 0:
+                    result = parse(file)
+                else:
+                    result = pd.concat([result, parse(file)])
+                result.to_excel('!KAD.xls', index=False)
+
+        try:
+            path = r'' + SmartPlot.file_paths.decode("utf-8") + r"\*.xml"
+            parsing(path)
+            print('Сохранено!')
+        except Exception as e:
+            print(e)
+            Popup().open()
 
 
 class DropBut(Button):
@@ -2887,7 +3041,8 @@ class DropBut(Button):
             if types is not None:
                 for i in types:
                     btn = Button(text=str(i), size_hint_y=None, height=30, font_size=12,
-                                 text_size=(self.width - 10, None), halign='left', valign='middle')
+                                 text_size=(self.width - 10, None), halign='left', valign='middle',
+                                 color=[0.3, 0.3, 0.3, 1], background_color=[256, 256, 256, 0.7])
                     btn.bind(on_release=lambda btn: self.drop_list.select(btn.text))
                     self.drop_list.add_widget(btn)
 
