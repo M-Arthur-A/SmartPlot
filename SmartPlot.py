@@ -1220,7 +1220,11 @@ TabbedPanel:
                         font_size: 16
                         size_hint_y: 0.3
                     Label:
-                        text: 'вытащит все содержащиеся данные и '
+                        text: 'вытащит все содержащиеся данные по'
+                        font_size: 16
+                        size_hint_y: 0.3
+                    Label:
+                        text: 'недвижимости и переходу прав на неё, '
                         font_size: 16
                         size_hint_y: 0.3
                     Label:
