@@ -3019,7 +3019,23 @@ class SmartPlot(App):
                     result = parse(file)
                 else:
                     result = pd.concat([result, parse(file)])
-                result.to_excel('!KAD.xls', index=False)
+                from os.path import expanduser as osexp
+                # Сохранение
+                try:
+                    try:
+                        home_path = osexp(r'~/Desktop/' + 'DB_kad' + '.xls')
+                        result.to_excel(home_path, index=False)
+                    except Exception as e:
+                        print(e)
+                        home_path_2 = osexp(r'~/Рабочий стол/' + 'DB_kad' + '.xls')
+                        result.to_excel(home_path_2, index=False)
+                except Exception as e:
+                    print(e)
+                    try:
+                        result.to_excel(r'~/Desktop/' + 'DB_kad' + '.xls', index=False)
+                    except Exception as e:
+                        print(e)
+                        result.to_excel(r'~/Рабочий стол/' + 'DB_kad' + '.xls', index=False)
 
         try:
             path = r'' + SmartPlot.file_paths.decode("utf-8") + r"\*.xml"
