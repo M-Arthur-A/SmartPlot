@@ -1,5 +1,6 @@
-# SMARTPLOT
-## Описание функций
+# SMARTPLOT  
+![SmartPlot_side-view](https://cdna.artstation.com/p/assets/images/images/026/547/690/large/arthur-man-gui-render-3d.jpg?1589063435)
+## Описание функций  
 * **Модуль "`SmartPlot`"**  
 Сохранение кастомизируемых графиков из сводной таблицы excel  
 * **Модуль "`Выпискатор`"** *(WIP)*  

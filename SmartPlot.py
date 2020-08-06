@@ -7,26 +7,28 @@ import pandas as pd
 import difflib
 import re
 from glob import glob as gb
+from os.path import expanduser as osexp
+import zipfile
 from lxml import etree
+import datetime as dt
 import sys
 from kivy.config import Config
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.button import Button
-from kivy.uix.checkbox import CheckBox
 from kivy.core.window import Window
-from kivy.uix.image import Image
 from kivy.uix.popup import Popup
 from kivy.uix.dropdown import DropDown
+from kivy.properties import ListProperty, StringProperty
+from kivy.clock import Clock
+from kivy.metrics import dp
+from kivy.uix.image import Image
+from kivy.uix.checkbox import CheckBox
 from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
 from kivy.graphics import RoundedRectangle
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.tabbedpanel import TabbedPanel
-from kivy.properties import ListProperty, StringProperty
 from kivy.uix.video import Video
-from kivy.clock import Clock
-import datetime as dt
-from kivy.metrics import dp
 
 
 sys.setrecursionlimit(10 ** 9)
@@ -117,7 +119,7 @@ TabbedPanel:
                             text: "Drag'n Drop"
                             color: 0.3,0.3,0.3,1
                         Image:
-                            id: doc_img
+                            id: sp_doc_img
                             source: 'Emina/Enable/DnD'
                         BoxLayout:
                             size_hint_y: 0.8
@@ -940,7 +942,7 @@ TabbedPanel:
                             text: "Drag'n Drop"
                             color: 0.3,0.3,0.3,1
                         Image:
-                            id: doc_img
+                            id: red_doc_img
                             source: 'Emina/Enable/DnD'
                         BoxLayout:
                             size_hint_y: 2.7
@@ -1164,7 +1166,7 @@ TabbedPanel:
                             text: "Drag'n Drop"
                             color: 0.3,0.3,0.3,1
                         Image:
-                            id: doc_img
+                            id: nedv_doc_img
                             source: 'Emina/Enable/DnD'
                         BoxLayout:
                             size_hint_y: 2.7
@@ -1203,7 +1205,7 @@ TabbedPanel:
                                 pos: self.pos
                                 size: self.size
                     Label:
-                        text: 'Требуется перетащить папку с .xml файлами в окно программы'
+                        text: 'Требуется перетащить папку с .xml или .zip файлами в окно программы'
                         font_size: 20
                         size_hint_y: 0.3
                     BoxLayout:###################################
@@ -1360,7 +1362,9 @@ class SmartPlot(App):
                 SmartPlot.df2 = pd.read_excel(path, header=None)
         else:
             SmartPlot.file_paths = file_path
-            App.get_running_app().root.ids.doc_img.source = 'Emina/Activated/DnD'
+            App.get_running_app().root.ids.nedv_doc_img.source = 'Emina/Activated/DnD'
+            App.get_running_app().root.ids.sp_doc_img.source = 'Emina/Activated/DnD'
+            App.get_running_app().root.ids.red_doc_img.source = 'Emina/Activated/DnD'
 
     def popup_errtxt(self):
         if App.get_running_app().root.current_tab.text == "Редактор":
@@ -1440,8 +1444,6 @@ class SmartPlot(App):
 
             DF = df[['Dop', Netto, 'NettoS', 'IndeX', 'SSS', SS, 'DopEnd']]
 
-            # import os
-            from os.path import expanduser as osexp
             if App.get_running_app().root.ids.xl.state == 'down':
                 # writer = pd.ExcelWriter(os.path.expanduser('~/Desktop/ASVplot.xlsx'))
                 writer = ExcelWriter(osexp('~/Desktop/ASVplot.xlsx'))
@@ -2550,7 +2552,7 @@ class SmartPlot(App):
                     try:
                         what = what.lower()
                     except:
-                        None
+                        pass
                     for i, r in where.dropna(subset=[col1 - 1]).iterrows():
                         try:
                             wh = r[where.columns.tolist()[0]].lower()
@@ -2577,7 +2579,7 @@ class SmartPlot(App):
                             df.loc[i:i, 'Расшифровка'] = 'Найдено ~ на ' + str(round(acc)) + '%'
                     except Exception as e:
                         print(e)
-                        None
+                        pass
 
             # print('vpr poshel')
             # сделать цикл запусков до целевой точности
@@ -2588,7 +2590,6 @@ class SmartPlot(App):
                     VPRing(df, i, col1, col2)
             # сохраняем либо в ексель, либо в csv (если больше 1 млн ячеек)
             konec = (dt.datetime.now() - nachalo).total_seconds()
-            from os.path import expanduser as osexp
             try:
                 writer = pd.ExcelWriter(osexp(r'~/Desktop/' + 'DjinnsGift_' + str(round(konec, 2)) + '.xlsx'), \
                                         date_format='DD.MM.YY', datetime_format='DD.MM.YY')
@@ -2738,7 +2739,6 @@ class SmartPlot(App):
                         except Exception as e:
                             print(e)
                             try:
-                                from os.path import expanduser as osexp
                                 writer = pd.ExcelWriter(osexp(r'~/Desktop/' + 'DjinnsGift' + '.xlsx'), \
                                                         date_format='DD.MM.YY', datetime_format='DD.MM.YY')
                                 workbook = writer.book
@@ -2774,7 +2774,6 @@ class SmartPlot(App):
                 except Exception as e:
                     print('ОШИБКА!:')
                     print(e)
-                    from os.path import expanduser as osexp
                     df3.to_csv(osexp(r'~/Desktop/' + 'DjinnsGift_err' + '.csv'), sep=";", decimal=',', index=False,
                                encoding='utf-8-sig')
                     next_video(1)
@@ -2941,7 +2940,6 @@ class SmartPlot(App):
                                     typograph(i, ii)
                                 ii += 1
             # СОХРАНЕНИЕ
-            from os.path import expanduser as osexp
             try:
                 doc.save(osexp(r'~/Desktop/' + 'Report' + '.docx'))
             except:
@@ -2953,22 +2951,44 @@ class SmartPlot(App):
 
     # ОСНОВНАЯ ФУНКЦИЯ НЕДВИГЕРА
     def EGRN(self):
+        def unzipping(path):
+            ospath = r'' + path + r"/*.zip"
+            zipspath = r'' + path + r'/zips'
+            oszipspath = r'' + zipspath + r"/*.zip"
+            files = gb(ospath)
+            for zip in files:
+                with zipfile.ZipFile(zip, 'r') as zip_p:
+                    zip_p.extractall(zipspath)
+            zipfiles = gb(oszipspath)
+            for z in zipfiles:
+                with zipfile.ZipFile(z, 'r') as zip:
+                    zip.extractall(r'' + path + r'/xmls')
+
         def parse(path):
             try:
                 tree = etree.parse(path)
                 lstKey = []
                 lstValue = []
                 for p in tree.iter():
-                    lstKey.append(tree.getpath(p).replace("/", ".")[1:])
+                    # lstKey.append(tree.getpath(p).replace("/", ".")[1:])
+                    key = tree.getelementpath(p)
+                    key = re.sub('{([\s\S]+?)}', '', key)
+                    key = key.replace("/", ".")
+                    attr = str(p.attrib)
+                    lstKey.append(str(key) + attr)
                     lstValue.append(p.text)
                 df = pd.DataFrame({'key': lstKey, 'value': lstValue})
-                df.loc[:, 'Кадастровый№'] = df.loc[df['key'].str.contains('CadastralNumber'), 'value'].squeeze()
+                # df.loc[:, 'Кадастровый№'] = df.loc[df['key'].str.contains('CadastralNumber'), 'value'].squeeze()
+                df.loc[:, 'Кадастровый№'] = df.loc[df['key'].str.contains("CadastralNumber':"), 'key'].squeeze().split("'")[3]
                 df.loc[:, 'Тип'] = df.loc[df['key'].str.contains('ObjectDesc.Name'), 'value'].squeeze()
                 df.loc[:, 'Подтип'] = df.loc[df['key'].str.contains('ObjectDesc.ObjectTypeText'), 'value'].squeeze()
                 df.loc[:, 'Категория'] = df.loc[
                     df['key'].str.contains('ObjectDesc.GroundCategoryText'), 'value'].squeeze()
                 df.loc[:, 'Площадь'] = df.loc[df['key'].str.contains('ObjectDesc.Area.AreaText'), 'value'].squeeze()
-                df.loc[:, 'Адрес'] = df.loc[df['key'].str.contains('ObjectDesc.Address.Content'), 'value'].squeeze()
+                if df.loc[df['key'].str.contains('ObjectDesc.Address.Content'), 'value'].squeeze().empty:
+                    df.loc[:, 'Адрес'] = df.loc[df['key'].str.contains('Address.Note'), 'value'].squeeze()
+                else:
+                    df.loc[:, 'Адрес'] = df.loc[df['key'].str.contains('ObjectDesc.Address.Content'), 'value'].squeeze()
                 # Заполняем собственника
                 df.loc[df['key'].str.contains('Owner.*Content', regex=True), 'Собственник'] = df.loc[
                     df['key'].str.contains('Owner.*Content', regex=True), 'value']
@@ -3010,6 +3030,7 @@ class SmartPlot(App):
                 return df
             except:
                 print('TROUBLE!!!!!!!!!!!!!', path)
+
         def parsing(fpath):
             files = gb(fpath)
             res = []
@@ -3019,7 +3040,6 @@ class SmartPlot(App):
                     result = parse(file)
                 else:
                     result = pd.concat([result, parse(file)])
-                from os.path import expanduser as osexp
                 # Сохранение
                 try:
                     try:
@@ -3038,9 +3058,25 @@ class SmartPlot(App):
                         result.to_excel(r'~/Рабочий стол/' + 'DB_kad' + '.xls', index=False)
 
         try:
-            path = r'' + SmartPlot.file_paths.decode("utf-8") + r"\*.xml"
-            parsing(path)
-            print('Сохранено!')
+            path = r'' + SmartPlot.file_paths.decode("utf-8")
+            # определяем содержимое папки
+            zpath = r'' + path + r"/*.zip"
+            try:
+                if len(gb(zpath)) > 0:
+                    unzipping(path)
+                    path = r'' + path + r'/xmls' + r'/*.xml'
+                    parsing(path)
+                    print('Сохранено!')
+                else:
+                    print('unzip не нужен')
+                    path = path + r"/*.xml"
+                    parsing(path)
+                    print('Сохранено!')
+            except Exception as e:
+                print(e)
+                path = path + r"/*.xml"
+                parsing(path)
+                print('Сохранено!')
         except Exception as e:
             print(e)
             Popup().open()
